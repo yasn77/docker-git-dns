@@ -67,8 +67,8 @@ def main():
     while True:
         if has_update(repo):
             pass
-    __log("Sleeping for {0} sec".format(sec))
-    time.sleep(sec)
+        __log("Sleeping for {0} sec".format(sec))
+        time.sleep(sec)
 
 if __name__ == '__main__':
     config = get_config()
