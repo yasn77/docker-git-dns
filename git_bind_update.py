@@ -7,30 +7,26 @@ import time
 import pprint
 
 config_file = '/docker-git-dns.json'
-env_vars_map = {
-                'GIT_REPO': 'repo',
-                'UPDATE_INTERVAL': 'update',
-                'CONFIG_PATH': 'config_path'
-               }
-repo_dir = '/git_dns'
+
+def set_config_defaults():
+    return {
+        'GIT_REPO': None,
+        'CONFIG_PATH': None,
+        'UPDATE_INTERVAL': '30m',
+        'REPO_DIR': '/git_dns'
+    }
 
 def get_config():
-    config = {}
+    config = set_config_defaults()
     try:
         with open(config_file) as d:
-            config = json.load(d)
+            config = config.update(json.load(d))
     except:
         pass
 
-    for k,v in env_vars_map.iteritems():
+    for k in config.keys():
         if k in os.environ.keys():
-            config[v] = os.environ[k]
-    # Set some defaults
-    if not config.has_key('config_path'):
-        config['config_path'] = None
-    if not config.has_key('update'):
-        config['update'] = '30m'
-    config['repo_dir'] = repo_dir
+            config[k] = os.environ[k]
     return config
 
 def __log(msg):
@@ -47,8 +43,8 @@ def to_sec(u, v):
         return int(v)
 
 def clone_repo():
-    __log("Cloning repository : {0}".format(config['repo_dir']))
-    repo = Repo.clone_from(config['repo'], config['repo_dir'])
+    __log("Cloning repository : {0}".format(config['REPO_DIR']))
+    repo = Repo.clone_from(config['GIT_REPO'], config['REPO_DIR'])
     return repo
 
 def has_update(repo):
@@ -56,15 +52,15 @@ def has_update(repo):
 
 def main():
     repo = clone_repo()
-    unit = config['update'][-1].lower()
+    unit = config['UPDATE_INTERVAL'][-1].lower()
     if unit.isalpha():
-        interval = config['update'][0:-1]
+        interval = config['UPDATE_INTERVAL'][0:-1]
     else:
-        interval = config['update']
+        interval = config['UPDATE_INTERVAL']
     try:
         sec = to_sec(unit, interval)
     except ValueError:
-        __log('ERR: Update interval is set to: {0}'.format(config['update']))
+        __log('ERR: Update interval is set to: {0}'.format(config['UPDATE_INTERVAL']))
         __log('ERR: Problem trying to convert {0} to seconds...exiting'.format(interval))
         exit(1)
     __log("Going in to run loop")
