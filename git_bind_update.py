@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from git import Repo
+from git import Repo, exc
 import os
 import time
 
@@ -42,16 +42,45 @@ def to_sec(u, v):
     else:
         return int(v)
 
+def named_conf():
+    pass
+
 def clone_repo():
     __log("Cloning repository : {0}".format(config['REPO_DIR']))
-    repo = Repo.clone_from(config['GIT_REPO'], config['REPO_DIR'])
-    return repo
+    failed = False
+    if os.path.exists(config['REPO_DIR']):
+        try:
+            repo = Repo(config['REPO_DIR'])
+            if not repo.remotes.origin.url == config['GIT_REPO']:
+                __log("ERR: {0} exists but origin is not {1}, not sure what to do so exiting..".format(config['REPO_DIR'], config['GIT_REPO']))
+                failed = True
+        except exc.InvalidGitRepositoryError:
+            __log("ERR: {0} exists but isn't a git repo, not sure what to do so exiting..".format(config['REPO_DIR']))
+            failed = True
+    else:
+        repo = Repo.clone_from(config['GIT_REPO'], config['REPO_DIR'])
+    return repo if failed == False else exit(1)
 
 def has_update(repo):
-    pass
+    __log('Fetching refs from origin')
+    # GitPython may raise an exception after doing a fetch, workaround is to
+    # try again. Found the fix here --> https://github.com/saltstack/salt/commit/6ef26b188013dd0f249cdf8432222224d4375156
+    try:
+        repo.remotes.origin.fetch()
+    except AssertionError:
+        repo.remotes.origin.fetch()
+    if repo.rev_parse('master') == repo.rev_parse('origin/master'):
+        __log('Local master == Remote master')
+        return False
+    else:
+        __log('Local master != Remote master')
+        return True
+    fi
 
 def main():
     repo = clone_repo()
+    origin = repo.remotes.origin
+    named_conf()
     unit = config['UPDATE_INTERVAL'][-1].lower()
     if unit.isalpha():
         interval = config['UPDATE_INTERVAL'][0:-1]
@@ -66,7 +95,8 @@ def main():
     __log("Going in to run loop")
     while True:
         if has_update(repo):
-            pass
+           __log('Pulling git repo from origin')
+           origin.pull()
         __log("Sleeping for {0} sec".format(sec))
         time.sleep(sec)
 
