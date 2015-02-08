@@ -11,7 +11,7 @@ config_file = '/docker-git-dns.json'
 def set_config_defaults():
     return {
         'GIT_REPO': None,
-        'CONFIG_PATH': None,
+        'CONFIG_PATH': 'named.local',
         'UPDATE_INTERVAL': '30m',
         'REPO_DIR': '/git_dns',
         'LOCAL_NET': 'any',
@@ -30,6 +30,8 @@ def get_config():
             config[k] = os.environ[k]
     if config.has_key('LOCAL_NET'):
         config['LOCAL_NET'] = config['LOCAL_NET'].replace(',', ';')
+
+    config['NAMED_LOCAL'] = '/etc/bind/named.conf.local'
     return config
 
 def __log(msg):
@@ -45,17 +47,29 @@ def to_sec(u, v):
     else:
         return int(v)
 
+def named_conf_local(content):
+    with open(config['NAMED_LOCAL'], 'a') as git_conf:
+        git_conf.write(content)
+
 def named_acl(acl_name, acl_net):
     rule = """
 acl "%s" {
     %s;
-}
+};
 """ % (acl_name, acl_net)
-    with open('/etc/bind/acl.conf', 'w+') as acl:
-        acl.write(rule)
+    named_conf_local(rule)
 
 def named_conf():
-    named_acl('localnets', config['LOCAL_NET'])
+    os.unlink(config['NAMED_LOCAL'])
+    os.chown('/etc/bind/rndc.key', 0, 0)
+    git_named = "{0}/{1}".format(config['REPO_DIR'],config['CONFIG_PATH'])
+    named_acl('mynet', config['LOCAL_NET'])
+    named_conf_local('controls { inet 127.0.0.1 port 9953 allow {localhost;};};\n')
+    if os.path.exists(git_named):
+        named_conf_local('include "{0}";\n'.format(git_named))
+    else:
+        __log("ERR: {0} not found, exiting.".format(git_named))
+        exit(1)
 
 def clone_repo():
     __log("Cloning repository : {0}".format(config['REPO_DIR']))
