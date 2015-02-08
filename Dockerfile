@@ -11,6 +11,7 @@ RUN sed 's/main$/main universe/' -i /etc/apt/sources.list && \
             python-git \
             bind9
 
-ADD ./git_bind_update.py /git_bind_update.py
+ADD ./git_bind_update.py /git_bind_update.python
+ADD ./named.conf.options /etc/bind/named.conf.options
 
 ENTRYPOINT ["/usr/bin/python", "/git_bind_update.py"]
