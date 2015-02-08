@@ -3,6 +3,7 @@
 from git import Repo, exc
 import os
 import time
+import subprocess
 
 import pprint
 
@@ -50,6 +51,12 @@ def to_sec(u, v):
 def named_conf_local(content):
     with open(config['NAMED_LOCAL'], 'a') as git_conf:
         git_conf.write(content)
+
+def start_named():
+    subprocess.Popen(["/usr/sbin/named", "-c", "/etc/bind/named.conf"])
+
+def named_reload():
+    subprocess.Popen(['/usr/sbin/rndc', '-p', '9953', 'reload'])
 
 def named_acl(acl_name, acl_net):
     rule = """
@@ -107,6 +114,7 @@ def main():
     repo = clone_repo()
     origin = repo.remotes.origin
     named_conf()
+    start_named()
     unit = config['UPDATE_INTERVAL'][-1].lower()
     if unit.isalpha():
         interval = config['UPDATE_INTERVAL'][0:-1]
@@ -121,8 +129,9 @@ def main():
     __log("Going in to run loop")
     while True:
         if has_update(repo):
-           __log('Pulling git repo from origin')
+           __log('Pulling git repo from origin and reloading bind')
            origin.pull()
+           named_reload()
         __log("Sleeping for {0} sec".format(sec))
         time.sleep(sec)
 
