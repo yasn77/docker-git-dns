@@ -13,7 +13,8 @@ def set_config_defaults():
         'GIT_REPO': None,
         'CONFIG_PATH': None,
         'UPDATE_INTERVAL': '30m',
-        'REPO_DIR': '/git_dns'
+        'REPO_DIR': '/git_dns',
+        'LOCAL_NET': 'any',
     }
 
 def get_config():
@@ -27,6 +28,8 @@ def get_config():
     for k in config.keys():
         if k in os.environ.keys():
             config[k] = os.environ[k]
+    if config.has_key('LOCAL_NET'):
+        config['LOCAL_NET'] = config['LOCAL_NET'].replace(',', ';')
     return config
 
 def __log(msg):
@@ -42,8 +45,17 @@ def to_sec(u, v):
     else:
         return int(v)
 
+def named_acl(acl_name, acl_net):
+    rule = """
+acl "%s" {
+    %s;
+}
+""" % (acl_name, acl_net)
+    with open('/etc/bind/acl.conf', 'w+') as acl:
+        acl.write(rule)
+
 def named_conf():
-    pass
+    named_acl('localnets', config['LOCAL_NET'])
 
 def clone_repo():
     __log("Cloning repository : {0}".format(config['REPO_DIR']))
