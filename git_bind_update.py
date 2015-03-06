@@ -38,12 +38,17 @@ def get_config():
 def __log(msg):
     print('{0} {1}').format(time.strftime("%Y-%m-%dT%H:%M:%S"), msg)
 
-def to_sec(u, v):
-    if u == 's':
+def to_sec(interval):
+    unit = interval[-1].lower()
+    if unit.isalpha():
+       i  = interval[0:-1]
+    else:
+        i = interval
+    if unit == 's':
         return int(v)
-    elif u == 'm':
+    elif unit == 'm':
         return int(v) * 60
-    elif u == 'h':
+    elif unit == 'h':
         return int(v) * 3600
     else:
         return int(v)
@@ -115,13 +120,8 @@ def main():
     origin = repo.remotes.origin
     named_conf()
     start_named()
-    unit = config['UPDATE_INTERVAL'][-1].lower()
-    if unit.isalpha():
-        interval = config['UPDATE_INTERVAL'][0:-1]
-    else:
-        interval = config['UPDATE_INTERVAL']
     try:
-        sec = to_sec(unit, interval)
+        sec = to_sec(config['UPDATE_INTERVAL'])
     except ValueError:
         __log('ERR: Update interval is set to: {0}'.format(config['UPDATE_INTERVAL']))
         __log('ERR: Problem trying to convert {0} to seconds...exiting'.format(interval))
