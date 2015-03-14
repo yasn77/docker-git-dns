@@ -1,5 +1,6 @@
 FROM ubuntu:14.04
 MAINTAINER Yasser Nabi "yassersaleemi@gmail.com"
+EXPOSE 53/tcp 53/udp
 ENV SSH_AUTH_SOCK /ssh_auth_sock
 
 ENV DEBIAN_FRONTEND noninteractive
