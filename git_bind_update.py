@@ -38,6 +38,16 @@ def get_config():
 def __log(msg):
     print('{0} {1}').format(time.strftime("%Y-%m-%dT%H:%M:%S"), msg)
 
+def disable_ssh_host_key_verify():
+    ssh_config_path = "/etc/ssh/ssh_config"
+    ssh_config = """Host *
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+    LogLevel=QUIET
+"""
+    with open(ssh_config_path, 'w') as ssh_conf:
+        ssh_conf.write(ssh_config)
+
 def to_sec(interval):
     unit = interval[-1].lower()
     if unit.isalpha():
@@ -116,6 +126,7 @@ def has_update(repo):
     fi
 
 def main():
+    disable_ssh_host_key_verify()
     repo = clone_repo()
     origin = repo.remotes.origin
     named_conf()
