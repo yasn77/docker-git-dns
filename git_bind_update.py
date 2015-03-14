@@ -55,13 +55,13 @@ def to_sec(interval):
     else:
         i = interval
     if unit == 's':
-        return int(v)
+        return int(i)
     elif unit == 'm':
-        return int(v) * 60
+        return int(i) * 60
     elif unit == 'h':
-        return int(v) * 3600
+        return int(i) * 3600
     else:
-        return int(v)
+        return int(i)
 
 def named_conf_local(content):
     with open(config['NAMED_LOCAL'], 'a') as git_conf:
