@@ -106,6 +106,7 @@ def clone_repo():
             __log("ERR: {0} exists but isn't a git repo, not sure what to do so exiting..".format(config['REPO_DIR']))
             failed = True
     else:
+        os.makedirs(config['REPO_DIR'])
         repo = Repo.clone_from(config['GIT_REPO'], config['REPO_DIR'])
     return repo if failed == False else exit(1)
 
